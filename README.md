@@ -56,4 +56,4 @@ The executable does **not** bundle Git, Node, or pnpm—they must still be insta
 
 ## License
 
-GPL-3.0-or-later (same spirit as Equicord / Vencord). Add a `LICENSE` file in this repo if you want GitHub to show it explicitly.
+See [LICENSE](LICENSE) (MIT).
