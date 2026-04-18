@@ -1,6 +1,6 @@
 # Equicord Plugin Installer
 
-A small Windows-friendly GUI for [Equicord](https://github.com/Equicord/Equicord): clone or link the repo, copy custom **userplugins** into `src/userplugins`, run `pnpm build`, and inject into Discord using **Equilotl**—with a live log, saved linked folder, and non-interactive inject (`-branch auto|stable|canary|ptb`).
+GUI helper for [Equicord](https://github.com/Equicord/Equicord): link or clone the repo, install custom **userplugins**, build, and inject with **Equilotl** (live log, saved folder, `-branch` for non-interactive inject).
 
 > **Disclaimer:** Third-party client modifications may violate Discord’s Terms of Service. Use at your own risk.
 
@@ -12,83 +12,89 @@ A small Windows-friendly GUI for [Equicord](https://github.com/Equicord/Equicord
 
 **On that page:** open the **latest** release → scroll to **Assets** → download **`EquicordManager.exe`**.
 
-*(If there is no release yet, use **Actions** → **Build Windows exe** → **Artifacts** → `EquicordManager-Windows`, or build locally — see below.)*
+*(No release yet? **Actions** → **Build Windows exe** → **Artifacts** → `EquicordManager-Windows`, or see **Requirements & building** below.)*
 
 ---
 
-## Requirements
+## Screenshots
+
+| ![Setup](assets/screen1.png) | ![Manager](assets/screen2.png) |
+|:---:|:---:|
+| **Setup** — clone or link repo | **Manager** — plugins, inject, log |
+
+---
+
+## What it does
+
+- **Setup:** Clone Equicord or **link** an existing repo (folder with `package.json`).
+- **Manager:** Lists **userplugins** with title & description from `definePlugin`, runs **build** / **inject**, optional **cmd** for git pull + install.
+- **Discord target:** **AUTO** / Stable / Canary / PTB → Equilotl `-branch` (no stuck installer menu on Windows).
+
+<details>
+<summary><b>Requirements & building from source (optional)</b></summary>
+
+You need **Git**, **Node**, and **pnpm** on your `PATH` for clone / build / inject (the `.exe` does not bundle them).
 
 | For the GUI | For clone / build / inject |
 |-------------|----------------------------|
-| Python 3.10+ (if running `.py`) | [Git](https://git-scm.com) |
-| [customtkinter](https://github.com/TomSchimansky/CustomTkinter) (`pip install customtkinter`) | [Node.js](https://nodejs.org) |
+| Python 3.10+ (only if you run `.py`) | [Git](https://git-scm.com) |
+| [customtkinter](https://github.com/TomSchimansky/CustomTkinter) | [Node.js](https://nodejs.org) |
 | | [pnpm](https://pnpm.io) |
 
-Building the `.exe` also needs [PyInstaller](https://pyinstaller.org) (installed automatically by the build script).
-
-## Run from source
+**Run from source**
 
 ```bash
 pip install customtkinter
 python equicord_manager.py
 ```
 
-## Build a standalone `.exe` (Windows)
+**Build `.exe` locally (Windows)**
 
-Double-click **`build_equicord_manager.bat`** or:
+Double-click **`build_equicord_manager.bat`**, or:
 
 ```bash
 pip install -r requirements-manager-build.txt
 python -m PyInstaller --noconfirm --clean EquicordManager.spec
 ```
 
-Output: **`dist/EquicordManager.exe`** (single file, no console window).
+Output: **`dist/EquicordManager.exe`**.
 
-The executable does **not** bundle Git, Node, or pnpm—they must still be installed and on your `PATH` when you use clone/build/inject features.
+</details>
 
-### Build on GitHub (CI)
+<details>
+<summary><b>GitHub CI & releases (maintainers)</b></summary>
 
-The repo includes [`.github/workflows/build-windows.yml`](.github/workflows/build-windows.yml). On every push to `main` (and on pull requests), GitHub Actions runs PyInstaller on **windows-latest** and uploads **`EquicordManager.exe`** as a workflow artifact.
+**CI — artifact on every push to `main`**
 
-1. Push these files to GitHub (including `.github/workflows/build-windows.yml`).
-2. Open the repo on GitHub → **Actions** → select **Build Windows exe** → open the latest run.
-3. Under **Artifacts**, download **EquicordManager-Windows** (zip containing the `.exe`).
+Workflow: [`.github/workflows/build-windows.yml`](.github/workflows/build-windows.yml). **Actions** → **Build Windows exe** → **Artifacts** → **EquicordManager-Windows** (zip). Artifacts expire after a while.
 
-You can also run the workflow manually: **Actions** → **Build Windows exe** → **Run workflow**.
+**Releases — stable download link**
 
-### Publish a versioned download (GitHub Releases)
-
-The workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) runs when you push a **tag** whose name starts with `v` (for example `v1.0.0`). It builds the same `.exe` and **creates a [Release](https://github.com/jacobeyebrow/equicord-plugin-installer/releases)** with `EquicordManager.exe` attached, so the link stays valid (unlike CI artifacts, which expire).
-
-From your machine, on `main` with your changes committed:
+Workflow: [`.github/workflows/release.yml`](.github/workflows/release.yml). Push a tag `v*`:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Use the next version you want (`v1.0.1`, `v2.0.0`, etc.). After the workflow finishes, open **Releases** on GitHub and share that page or the direct asset link.
+Then open [Releases](https://github.com/jacobeyebrow/equicord-plugin-installer/releases) and use **Assets** → `EquicordManager.exe`.
 
-## What it does
+</details>
 
-- **Setup:** Clone Equicord into a folder you choose, or **Link folder** to an existing Equicord repo (must contain `package.json`).
-- **Manager:** Lists plugins under `src/userplugins` with **title** and **description** from each plugin’s `definePlugin({ ... })`.
-- **Install Custom Plugin:** Pick a plugin folder; it is copied into `src/userplugins/<name>`, then `pnpm build` and inject run with output in the built-in log.
-- **Reinstall / Update:** Opens a **Command Prompt** in the repo and runs `git pull`, `pnpm install`, and `node scripts/runInstaller.mjs -- --install -branch …` (avoids `pnpm` mangling `--` on Windows).
-- **Discord target:** `AUTO` / Stable / Canary / PTB maps to Equilotl’s `-branch` flag so inject is not stuck on the interactive picker.
-- **Saved settings:** Linked repo path and inject branch are stored under:
-  - Windows: `%APPDATA%\equicord_manager\settings.json`
-  - Linux / macOS: `~/.config/equicord_manager/settings.json`
-
-## Project layout
+<details>
+<summary><b>Project layout</b></summary>
 
 | File | Purpose |
 |------|---------|
 | `equicord_manager.py` | Application |
 | `EquicordManager.spec` | PyInstaller configuration |
 | `build_equicord_manager.bat` | Windows build helper |
-| `requirements-manager-build.txt` | Dependencies to build the `.exe` |
+| `requirements-manager-build.txt` | Build deps for the `.exe` |
+
+**Saved settings:** Windows `%APPDATA%\equicord_manager\settings.json` · Linux/macOS `~/.config/equicord_manager/settings.json`
+
+</details>
 
 ## License
 
-See [LICENSE](LICENSE) (MIT).
+[MIT](LICENSE)
