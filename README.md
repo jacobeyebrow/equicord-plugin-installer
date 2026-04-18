@@ -34,6 +34,16 @@ Output: **`dist/EquicordManager.exe`** (single file, no console window).
 
 The executable does **not** bundle Git, Node, or pnpm—they must still be installed and on your `PATH` when you use clone/build/inject features.
 
+### Build on GitHub (CI)
+
+The repo includes [`.github/workflows/build-windows.yml`](.github/workflows/build-windows.yml). On every push to `main` (and on pull requests), GitHub Actions runs PyInstaller on **windows-latest** and uploads **`EquicordManager.exe`** as a workflow artifact.
+
+1. Push these files to GitHub (including `.github/workflows/build-windows.yml`).
+2. Open the repo on GitHub → **Actions** → select **Build Windows exe** → open the latest run.
+3. Under **Artifacts**, download **EquicordManager-Windows** (zip containing the `.exe`).
+
+You can also run the workflow manually: **Actions** → **Build Windows exe** → **Run workflow**.
+
 ## What it does
 
 - **Setup:** Clone Equicord into a folder you choose, or **Link folder** to an existing Equicord repo (must contain `package.json`).
