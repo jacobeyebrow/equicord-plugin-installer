@@ -4,6 +4,8 @@ GUI helper for [Equicord](https://github.com/Equicord/Equicord): link or clone t
 
 > **Disclaimer:** Third-party client modifications may violate Discord’s Terms of Service. Use at your own risk.
 
+**Requirements (clone / build / inject — not inside the `.exe`):** [Git](https://git-scm.com) · [Node.js](https://nodejs.org) · [pnpm](https://pnpm.io) — install these and ensure they’re on your `PATH`.
+
 ---
 
 ## **DOWNLOAD THE WINDOWS APP (`.exe`)**
@@ -33,13 +35,7 @@ GUI helper for [Equicord](https://github.com/Equicord/Equicord): link or clone t
 <details>
 <summary><b>Requirements & building from source (optional)</b></summary>
 
-You need **Git**, **Node**, and **pnpm** on your `PATH` for clone / build / inject (the `.exe` does not bundle them).
-
-| For the GUI | For clone / build / inject |
-|-------------|----------------------------|
-| Python 3.10+ (only if you run `.py`) | [Git](https://git-scm.com) |
-| [customtkinter](https://github.com/TomSchimansky/CustomTkinter) | [Node.js](https://nodejs.org) |
-| | [pnpm](https://pnpm.io) |
+Same toolchain as at the top: [Git](https://git-scm.com), [Node.js](https://nodejs.org), [pnpm](https://pnpm.io). To run the `.py` file instead of the exe you also need **Python 3.10+** and [**customtkinter**](https://github.com/TomSchimansky/CustomTkinter).
 
 **Run from source**
 
