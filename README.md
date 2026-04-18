@@ -44,6 +44,19 @@ The repo includes [`.github/workflows/build-windows.yml`](.github/workflows/buil
 
 You can also run the workflow manually: **Actions** → **Build Windows exe** → **Run workflow**.
 
+### Publish a versioned download (GitHub Releases)
+
+The workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) runs when you push a **tag** whose name starts with `v` (for example `v1.0.0`). It builds the same `.exe` and **creates a [Release](https://github.com/jacobeyebrow/equicord-plugin-installer/releases)** with `EquicordManager.exe` attached, so the link stays valid (unlike CI artifacts, which expire).
+
+From your machine, on `main` with your changes committed:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Use the next version you want (`v1.0.1`, `v2.0.0`, etc.). After the workflow finishes, open **Releases** on GitHub and share that page or the direct asset link.
+
 ## What it does
 
 - **Setup:** Clone Equicord into a folder you choose, or **Link folder** to an existing Equicord repo (must contain `package.json`).
