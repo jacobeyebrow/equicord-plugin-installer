@@ -4,6 +4,18 @@ A small Windows-friendly GUI for [Equicord](https://github.com/Equicord/Equicord
 
 > **Disclaimer:** Third-party client modifications may violate Discord’s Terms of Service. Use at your own risk.
 
+---
+
+## **DOWNLOAD THE WINDOWS APP (`.exe`)**
+
+### **→ [CLICK HERE — GitHub Releases → download `EquicordManager.exe`](https://github.com/jacobeyebrow/equicord-plugin-installer/releases/latest)**
+
+**On that page:** open the **latest** release → scroll to **Assets** → download **`EquicordManager.exe`**.
+
+*(If there is no release yet, use **Actions** → **Build Windows exe** → **Artifacts** → `EquicordManager-Windows`, or build locally — see below.)*
+
+---
+
 ## Requirements
 
 | For the GUI | For clone / build / inject |
