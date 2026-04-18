@@ -489,7 +489,7 @@ class EquicordApp(ctk.CTk):
 
         ctk.CTkButton(
             self.main_view,
-            text="Install Custom Plugin",
+            text="Install Custom Plugin(s)",
             width=300,
             height=45,
             fg_color="#23a559",
@@ -507,7 +507,7 @@ class EquicordApp(ctk.CTk):
         ctk.CTkLabel(
             self.main_view,
             text="Discord target: AUTO = non-interactive inject (Equilotl -branch auto). Or pick Stable / Canary / PTB.\n"
-            "Reinstall opens cmd in the repo; Install plugin streams output below.",
+            "Reinstall opens cmd in the repo. Install plugin(s) lets you pick several folders, then one build + inject.",
             font=ctk.CTkFont(size=12),
             text_color="gray",
         ).pack(pady=10)
@@ -649,27 +649,67 @@ class EquicordApp(ctk.CTk):
             messagebox.showerror("Error", str(e))
 
     def install_plugin(self) -> None:
-        plugin_src = filedialog.askdirectory(title="Select plugin folder (contains index.ts or index.tsx)")
-        if not plugin_src:
-            return
         repo = self.repo_path.get()
-        name = os.path.basename(os.path.normpath(plugin_src))
-        target_dir = os.path.join(repo, "src", "userplugins", name)
-        self.run_task(lambda: self._install_plugin_worker(plugin_src, repo, target_dir))
+        if not repo or repo == "Not Selected" or not os.path.isdir(repo):
+            messagebox.showerror(
+                "Error",
+                "Select a valid Equicord folder first (Setup → Link Folder or Clone).\n"
+                "The folder must contain package.json.",
+            )
+            return
 
-    def _install_plugin_worker(self, plugin_src: str, repo: str, target_dir: str) -> None:
+        plugin_srcs: list[str] = []
+        while True:
+            n = len(plugin_srcs)
+            title = "Select plugin folder (contains index.ts or index.tsx)"
+            if n:
+                title = f"Select another plugin folder — {n} already selected (Cancel to finish)"
+            plugin_src = filedialog.askdirectory(title=title, parent=self)
+            if not plugin_src:
+                break
+            plugin_srcs.append(plugin_src)
+            if not messagebox.askyesno(
+                "Add another plugin?",
+                f"Selected:\n{plugin_src}\n\nAdd another plugin folder before building?",
+                parent=self,
+            ):
+                break
+
+        if not plugin_srcs:
+            return
+
+        basenames = [os.path.basename(os.path.normpath(p)) for p in plugin_srcs]
+        if len(basenames) != len(set(basenames)):
+            messagebox.showerror(
+                "Duplicate folder names",
+                "Two or more selected folders have the same name. "
+                "Rename one on disk, or install them in separate runs.",
+                parent=self,
+            )
+            return
+
+        self.run_task(lambda: self._install_plugins_worker(plugin_srcs, repo))
+
+    def _install_plugins_worker(self, plugin_srcs: list[str], repo: str) -> None:
         try:
             if not os.path.isdir(repo) or not os.path.isfile(os.path.join(repo, "package.json")):
                 raise FileNotFoundError(
                     "Invalid Equicord repo. Use Setup → Link Folder and select the folder that contains package.json."
                 )
+            n = len(plugin_srcs)
             self._clear_log()
-            self._append_log(f"Copying plugin to:\n{target_dir}\n")
-            self.set_progress(0.3)
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-            shutil.copytree(plugin_src, target_dir)
-            self.set_progress(0.6)
+            for i, plugin_src in enumerate(plugin_srcs):
+                name = os.path.basename(os.path.normpath(plugin_src))
+                target_dir = os.path.join(repo, "src", "userplugins", name)
+                self._append_log(f"[{i + 1}/{n}] Copying plugin to:\n{target_dir}\n")
+                # Copy phase uses ~first half of the bar; build/inject the rest.
+                self.set_progress((i / max(n, 1)) * 0.45)
+                if os.path.exists(target_dir):
+                    shutil.rmtree(target_dir)
+                shutil.copytree(plugin_src, target_dir)
+                self.set_progress(((i + 1) / max(n, 1)) * 0.45)
+
+            self.set_progress(0.5)
             self._append_log("$ pnpm build")
             _run_streaming(["pnpm", "build"], cwd=repo, log_line=self._append_log)
             self.set_progress(0.85)
@@ -680,7 +720,11 @@ class EquicordApp(ctk.CTk):
             self.set_progress(1.0)
             self._append_log("")
             self._append_log("Done.")
-            self.ui(lambda: self._after_install_plugin_success(target_dir))
+            target_dirs = [
+                os.path.join(repo, "src", "userplugins", os.path.basename(os.path.normpath(p)))
+                for p in plugin_srcs
+            ]
+            self.ui(lambda: self._after_install_plugins_success(target_dirs))
         except subprocess.CalledProcessError as e:
             self.set_progress(0)
             self._append_log(f"\n[Command failed with exit code {e.returncode}]")
@@ -691,8 +735,13 @@ class EquicordApp(ctk.CTk):
             err_msg = str(e)
             self.ui(lambda: messagebox.showerror("Error", err_msg))
 
-    def _after_install_plugin_success(self, target_dir: str) -> None:
-        messagebox.showinfo("Success", f"Installed to:\n{target_dir}")
+    def _after_install_plugins_success(self, target_dirs: list[str]) -> None:
+        body = "\n".join(target_dirs)
+        if len(target_dirs) == 1:
+            msg = f"Installed to:\n{body}"
+        else:
+            msg = f"Installed {len(target_dirs)} plugins:\n\n{body}"
+        messagebox.showinfo("Success", msg)
         self.main_ui()
 
 
