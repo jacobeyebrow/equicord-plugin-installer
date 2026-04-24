@@ -248,7 +248,13 @@ def _which_ok(name: str) -> bool:
 
 
 def _open_update_terminal(repo: str, inject_branch: str = "auto") -> None:
-    """Open a visible terminal so git pull / pnpm run with the user's normal PATH."""
+    """Open a visible terminal so git pull / pnpm run with the user's normal PATH.
+
+    `pnpm build` must run before Equilotl inject. Inject only rewrites Discord's
+    `app.asar` stub to `require("<repo>/dist/desktop")`; if dist/desktop is missing
+    (fresh clone, or caller never built), Discord crashes at startup with
+    'Cannot find module ...dist\\desktop'.
+    """
     inject_line = _inject_install_shell_line(inject_branch)
 
     if sys.platform == "win32":
@@ -258,7 +264,11 @@ def _open_update_terminal(repo: str, inject_branch: str = "auto") -> None:
         if not os.path.isdir(repo_path):
             raise FileNotFoundError(f"Not a folder: {repo_path}")
         subprocess.Popen(
-            ["cmd", "/k", f"git pull && pnpm install --no-frozen-lockfile && {inject_line}"],
+            [
+                "cmd",
+                "/k",
+                f"git pull && pnpm install --no-frozen-lockfile && pnpm build && {inject_line}",
+            ],
             cwd=repo_path,
             creationflags=subprocess.CREATE_NEW_CONSOLE,  # type: ignore[attr-defined]
         )
@@ -272,6 +282,7 @@ def _open_update_terminal(repo: str, inject_branch: str = "auto") -> None:
             f"cd {rq}",
             "git pull",
             "pnpm install --no-frozen-lockfile",
+            "pnpm build",
             inject_line,
             "echo",
             "echo Done.",
@@ -309,7 +320,7 @@ def _open_update_terminal(repo: str, inject_branch: str = "auto") -> None:
             continue
     raise RuntimeError(
         "Could not open a terminal. From the repo root run: "
-        "git pull && pnpm install --no-frozen-lockfile && "
+        "git pull && pnpm install --no-frozen-lockfile && pnpm build && "
         "node scripts/runInstaller.mjs -- --install -branch auto"
     )
 
@@ -596,10 +607,17 @@ class EquicordApp(ctk.CTk):
 
             self._append_log(f"$ git clone … → {full_path}")
             _run_streaming(["git", "clone", EQUICORD_REPO, full_path], cwd=target, log_line=self._append_log)
-            self.set_progress(0.5)
+            self.set_progress(0.4)
             self._append_log("")
             self._append_log("$ pnpm install --no-frozen-lockfile")
             _run_streaming(["pnpm", "install", "--no-frozen-lockfile"], cwd=full_path, log_line=self._append_log)
+            # Build immediately so dist/desktop exists before the user hits Reinstall → inject.
+            # Without this, Equilotl patches Discord's app.asar to require a path that does not
+            # yet exist and Discord refuses to start.
+            self.set_progress(0.6)
+            self._append_log("")
+            self._append_log("$ pnpm build")
+            _run_streaming(["pnpm", "build"], cwd=full_path, log_line=self._append_log)
             self.set_progress(1.0)
             self.repo_path.set(full_path)
             self._append_log("")
@@ -640,7 +658,7 @@ class EquicordApp(ctk.CTk):
             return
         br = _normalize_inject_branch(self.target_client.get())
         self._append_log(
-            f"Opening terminal in:\n{repo}\n→ git pull && pnpm install && "
+            f"Opening terminal in:\n{repo}\n→ git pull && pnpm install && pnpm build && "
             f"{_inject_install_shell_line(br)}\n"
         )
         try:
